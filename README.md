@@ -121,7 +121,7 @@ Contact pings you
 
 ## Roadmap
 
-- **Phase 1 — Scam shield.** Standalone, no accounts needed. Flags and reports scam texts/numbers. Proves the idea and ships fast.
+- **Phase 1 — Scam shield.** ✅ **Shipped.** A local, read-only scanner that flags scam texts and explains why — no network, Python stdlib only. See [`app/scam/`](app/scam/). Run it: `python3 app/scam/scam_shield.py --file app/scam/samples/scams.txt`
 - **Phase 2 — Safety circle.** Opt-in check-ins and trusted contacts, with E2E encryption from day one.
 - **Phase 3 — Routine sense.** On-device anomaly detection and the gentle check-in prompt.
 
