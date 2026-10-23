@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aegis Guardian</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: single reading column; a dark "security console" accent world, calm neutrals, one amber safety accent + semantic good/warn/critical. */
+  :root {
+    --bg: #f6f5f2;
+    --surface: #ffffff;
+    --surface-2: #efeee9;
+    --fg: #1c1d22;
+    --muted: #5d606b;
+    --line: #dcdbd4;
+    --accent: #b5791f;      /* amber — the safety signal */
+    --accent-soft: #f4e7cf;
+    --good: #2f7d55;
+    --warn: #b5791f;
+    --crit: #b23a3a;
+    --console: #15161b;     /* dark panels */
+    --console-fg: #e9e8e3;
+    --console-muted: #9a9ca6;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101116;
+      --surface: #191a20;
+      --surface-2: #1f2128;
+      --fg: #eceae4;
+      --muted: #9a9ca6;
+      --line: #2c2e37;
+      --accent: #e0a94a;
+      --accent-soft: #37301f;
+      --good: #5cc088;
+      --warn: #e0a94a;
+      --crit: #e2706e;
+      --console: #080a0e;
+      --console-fg: #e9e8e3;
+      --console-muted: #868994;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101116;
+    --surface: #191a20;
+    --surface-2: #1f2128;
+    --fg: #eceae4;
+    --muted: #9a9ca6;
+    --line: #2c2e37;
+    --accent: #e0a94a;
+    --accent-soft: #37301f;
+    --good: #5cc088;
+    --warn: #e0a94a;
+    --crit: #e2706e;
+    --console: #080a0e;
+    --console-fg: #e9e8e3;
+    --console-muted: #868994;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Spline Sans", system-ui, sans-serif;
+    line-height: 1.55;
+  }
+  .wrap {
+    max-width: 50rem;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 2.5rem 4rem;
+  }
+  h1, h2, h3 { font-family: "Fraunces", Georgia, serif; text-wrap: balance; line-height: 1.15; margin: 0; }
+  .eyebrow {
+    font-family: "Spline Sans", system-ui, sans-serif;
+    font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin: 0 0 .6rem;
+  }
+  header h1 { font-size: clamp(2.1rem, 7vw, 3.1rem); font-weight: 600; }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin: .7rem 0 0; max-width: 34rem; }
+  .status-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.4rem; }
+  .chip {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-size: .78rem; font-weight: 500;
+    padding: .3rem .7rem; border-radius: 999px;
+    background: var(--surface-2); border: 1px solid var(--line); color: var(--muted);
+  }
+  .dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--good); }
+  .dot.warn { background: var(--warn); } .dot.crit { background: var(--crit); }
+
+  section { margin-top: 2.6rem; }
+  h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: .3rem; }
+  .lede { color: var(--muted); margin: .2rem 0 1.2rem; }
+
+  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 14px; padding: 1.1rem 1.15rem;
+  }
+  .card h3 { font-family: "Spline Sans", system-ui, sans-serif; font-size: 1rem; font-weight: 600; margin-bottom: .35rem; }
+  .card p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+  .line-rule { height: 1px; background: var(--line); border: 0; margin: 0; }
+
+  /* consent / refusal split */
+  .split { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+  .panel { border-radius: 14px; padding: 1.15rem 1.2rem; border: 1px solid var(--line); }
+  .panel.yes { background: color-mix(in srgb, var(--good) 10%, var(--surface)); border-color: color-mix(in srgb, var(--good) 35%, var(--line)); }
+  .panel.no  { background: color-mix(in srgb, var(--crit) 9%, var(--surface)); border-color: color-mix(in srgb, var(--crit) 35%, var(--line)); }
+  .panel h3 { display: flex; align-items: center; gap: .5rem; font-family: "Spline Sans", system-ui, sans-serif; font-size: 1rem; margin-bottom: .6rem; }
+  .panel ul { margin: 0; padding-left: 1.1rem; }
+  .panel li { margin: .3rem 0; font-size: .9rem; }
+  .mark { font-weight: 700; }
+  .mark.yes { color: var(--good); } .mark.no { color: var(--crit); }
+
+  /* security console */
+  .console {
+    background: var(--console); color: var(--console-fg);
+    border-radius: 16px; padding: 1.4rem 1.3rem; margin-top: 1.2rem;
+  }
+  .console .bar { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; }
+  .console .bar b { font-family: "Spline Sans", system-ui, sans-serif; font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; color: var(--console-muted); font-weight: 600; }
+  .locks { display: grid; gap: .85rem; }
+  .lock {
+    display: grid; grid-template-columns: 2rem 1fr; gap: .85rem; align-items: start;
+    padding: .85rem; border-radius: 11px; background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.07);
+  }
+  .lock .num {
+    font-family: "Spline Sans", monospace; font-size: .8rem; font-weight: 600;
+    width: 2rem; height: 2rem; display: grid; place-items: center;
+    border-radius: 8px; background: var(--accent-soft); color: var(--accent);
+  }
+  .lock h4 { margin: 0 0 .2rem; font-family: "Spline Sans", system-ui, sans-serif; font-size: .95rem; font-weight: 600; color: var(--console-fg); }
+  .lock p { margin: 0; font-size: .85rem; color: var(--console-muted); line-height: 1.5; }
+
+  .flow { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: 1rem; }
+  .step { background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: .45rem .7rem; font-size: .82rem; font-weight: 500; }
+  .arrow { color: var(--accent); font-weight: 700; }
+
+  footer { margin-top: 3rem; padding-top: 1.4rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .82rem; }
+  footer .kin { font-weight: 600; color: var(--fg); }
+  a { color: var(--accent); }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Spline+Sans:wght@400;500;600&display=swap">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Concept · Personal safety agent</p>
+    <h1>Aegis Guardian</h1>
+    <p class="tagline">A consent-first safety and anti-scam agent that protects the people who opt in — and is built so it can't be turned into the spy tool it's meant to prevent.</p>
+    <div class="status-row">
+      <span class="chip"><span class="dot"></span> Opt-in only</span>
+      <span class="chip"><span class="dot"></span> On-device first</span>
+      <span class="chip"><span class="dot warn"></span> End-to-end encrypted</span>
+      <span class="chip"><span class="dot"></span> Open source</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>What it does</h2>
+    <p class="lede">Four jobs, each one driven by data the user chooses to share.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Scam shield</h3>
+        <p>Flags junk and scam texts and numbers, auto-reports them, and learns new patterns — the "text JD to this number" trap included.</p>
+      </div>
+      <div class="card">
+        <h3>Safety check-ins</h3>
+        <p>Share live location with people you pick. If a worried contact pings you and you don't answer in a set window, your last location goes to them.</p>
+      </div>
+      <div class="card">
+        <h3>Trusted circle</h3>
+        <p>Learns who you text most and lets you name your emergency contacts, so the right person is reached first when it matters.</p>
+      </div>
+      <div class="card">
+        <h3>Routine sense</h3>
+        <p>Notices your normal patterns on-device. A big break from routine can prompt a gentle "you good?" check before anyone else is alerted.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The line it won't cross</h2>
+    <p class="lede">The difference between a guardian and stalkerware is one word: consent.</p>
+    <div class="split">
+      <div class="panel yes">
+        <h3><span class="mark yes">✓</span> Guardian</h3>
+        <ul>
+          <li>Everyone it protects opted in and can leave anytime.</li>
+          <li>You see and control what you share, with whom.</li>
+          <li>Location comes from <em>your own</em> device.</li>
+          <li>Alerts go to people <em>you</em> chose in advance.</li>
+        </ul>
+      </div>
+      <div class="panel no">
+        <h3><span class="mark no">✕</span> Not this</h3>
+        <ul>
+          <li>Tracking someone who didn't agree.</li>
+          <li>Tapping nearby phones, cameras, or WiFi to find a person.</li>
+          <li>Reading a location through other people's devices.</li>
+          <li>Any "silent" mode the tracked person can't see.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Built so it can't be hijacked</h2>
+    <p class="lede">A safety app that gets taken over becomes the worst-case tool. Security is the backbone — six layers.</p>
+    <div class="console">
+      <div class="bar"><span class="dot"></span><b>Protection model</b></div>
+      <div class="locks">
+        <div class="lock">
+          <span class="num">1</span>
+          <div><h4>End-to-end encryption</h4><p>Location and messages are encrypted on your device and only readable by the contacts you share with. The server stores ciphertext it can't open.</p></div>
+        </div>
+        <div class="lock">
+          <span class="num">2</span>
+          <div><h4>On-device by default</h4><p>Routine learning and pattern matching run locally. Data that never leaves the phone can't be stolen from a server.</p></div>
+        </div>
+        <div class="lock">
+          <span class="num">3</span>
+          <div><h4>Hardware-backed keys</h4><p>Keys live in the phone's secure enclave, not in app files. A copied database is useless without the device.</p></div>
+        </div>
+        <div class="lock">
+          <span class="num">4</span>
+          <div><h4>Guardian can't act alone</h4><p>Sensitive actions — adding a contact, changing who gets alerts — need your confirmation. No remote command can grant itself new access.</p></div>
+        </div>
+        <div class="lock">
+          <span class="num">5</span>
+          <div><h4>Tamper + takeover alerts</h4><p>New device logins, permission changes, and config edits all notify you. If someone tries to flip on silent tracking, you're the first to know.</p></div>
+        </div>
+        <div class="lock">
+          <span class="num">6</span>
+          <div><h4>Open source &amp; audited</h4><p>The code is public so anyone can verify there's no hidden backdoor — the same trust model as your VPN and Wi-Fi Guardian projects.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="flow" aria-label="Emergency flow">
+      <span class="step">Contact pings you</span>
+      <span class="arrow">→</span>
+      <span class="step">You don't respond in window</span>
+      <span class="arrow">→</span>
+      <span class="step">Last location → your chosen circle</span>
+      <span class="arrow">→</span>
+      <span class="step">You can cancel anytime</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>How it starts</h2>
+    <p class="lede">You don't have to build all four at once. The scam shield ships first and stands on its own.</p>
+    <div class="grid">
+      <div class="card"><h3>Phase 1</h3><p>Scam scanner &amp; reporter. Small, useful, no accounts needed. Proves the idea.</p></div>
+      <div class="card"><h3>Phase 2</h3><p>Opt-in safety check-ins and trusted circle, with E2E encryption from day one.</p></div>
+      <div class="card"><h3>Phase 3</h3><p>On-device routine sense and the gentle check-in prompt.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Working name — rename freely. A natural sibling to <span class="kin">VPN Guardian</span> and <span class="kin">Wi-Fi Guardian</span>: a consent-first security portfolio, each project public and auditable.</p>
+  </footer>
+</div>
+</body>
+</html>
