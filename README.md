@@ -1,4 +1,4 @@
-# 🛡️ Aegis Guardian
+# Aegis Guardian
 
 **A free, bilingual (English / Español) AI scam shield for everyday people and their families.**
 
@@ -8,7 +8,7 @@
 
 Aegis is a consent-first personal safety and anti-scam agent, built so it can never become the surveillance tool it's meant to prevent. It's part of the **Guardian** security portfolio, alongside [VPN Guardian](https://github.com/jeffreyesdavid/vpn-guardian) and [Wi-Fi Guardian](https://github.com/jeffreyesdavid/wifi-guardian). Like its siblings, it's **open source and auditable**, so you can verify there's no hidden backdoor.
 
-🚧 **Now in active development for the Meta Global AI Developer Hackathon** (indie dev track, Oct 26 – Nov 4, 2026).
+ **Now in active development for the Meta Global AI Developer Hackathon** (indie dev track, Oct 26 – Nov 4, 2026).
 
 ---
 
