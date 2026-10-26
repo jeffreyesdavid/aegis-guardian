@@ -142,6 +142,9 @@ def _post(body: dict, key: str) -> dict:
         detail = e.read().decode("utf-8", "replace")[:400]
         if e.code in (401, 403):
             raise AegisError("The API key was rejected. Check MODEL_API_KEY in your .env file.", 401)
+        if e.code == 402:
+            raise AegisError("Your Meta developer account needs billing set up before the API works. "
+                             "Open dev.meta.ai, go to Billing, then try again.", 402)
         if e.code == 429:
             raise AegisError("Rate limit or credit limit reached. Wait a minute or check your Meta developer dashboard.", 429)
         raise AegisError(f"Meta Model API error {e.code}: {detail}", 502)
