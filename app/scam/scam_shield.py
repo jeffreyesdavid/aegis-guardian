@@ -55,12 +55,19 @@ MONEY_WORDS = (
     "crypto", "bitcoin", "usdt", "gift card", "wire transfer", "cash app",
     "cashapp", "venmo", "zelle", "deposit", "activation fee", "processing fee",
     "unlock your", "withdraw your earnings",
+    # Español
+    "tarjeta de regalo", "criptomoneda", "transferencia bancaria", "depósito",
+    "cuota de activación", "tarifa de procesamiento", "retirar tus ganancias",
+    "desbloquear tu",
 )
 
 URGENCY_WORDS = (
     "only 20 positions", "limited slots", "act now", "offer expires",
     "today only", "last chance", "respond immediately", "within 24 hours",
     "hurry", "don't miss", "spots are filling",
+    # Español
+    "solo hoy", "últimos lugares", "plazas limitadas", "actúa ahora",
+    "responde de inmediato", "en 24 horas", "última oportunidad", "urgente",
 )
 
 JOB_BAIT = (
@@ -68,7 +75,31 @@ JOB_BAIT = (
     "daily pay", "flexible hours", "no experience", "your resume caught",
     "your impressive resume", "online reviewing", "rating tasks",
     "optimization tasks", "app testing",
+    # Español
+    "trabajo desde casa", "medio tiempo", "sin experiencia", "pago diario",
+    "horario flexible", "tu currículum", "tu curriculum", "equipo de reclutamiento",
 )
+
+FAMILY_OPENERS = (
+    "hi mom", "hi mum", "hi dad", "hey mom", "hey dad", "hola mamá", "hola mama",
+    "hola mami", "hola papá", "hola papa", "hola hijo", "hola hija",
+)
+NEW_NUMBER = (
+    "new number", "my new phone", "lost my phone", "broke my phone", "phone broke",
+    "nuevo número", "nuevo numero", "perdí mi teléfono", "se me rompió el teléfono",
+    "se me rompió el celular", "mi nuevo celular",
+)
+OTHER_APPS = ("whatsapp", "telegram", "signal app", "wechat", "line app")
+BRANDS = (
+    "usps", "fedex", "ups ", "dhl", "irs", "amazon", "paypal", "apple id", "netflix",
+    "e-zpass", "ezpass", "fastrak", "toll", "dmv", "wells fargo", "chase", "bank of america",
+    "your bank", "correos", "banco", "peaje", "hacienda",
+)
+BRAND_ACTIONS = (
+    "verify", "confirm", "suspend", "locked", "unpaid", "pay now", "past due", "update your",
+    "verificar", "confirmar", "suspendid", "bloquead", "pendiente de pago", "pagar", "actualiza",
+)
+WRONG_NUMBER = ("wrong number", "sorry, wrong", "número equivocado", "numero equivocado", "me equivoqué de número")
 
 
 def _has_url(text: str) -> bool:
@@ -82,7 +113,7 @@ def _reply_to_other_number(text: str) -> bool:
 
 def _daily_pay_range(text: str) -> bool:
     # "$200 and $400", "$200-$400", "pay falls between $200 and $400"
-    return bool(re.search(r"\$\s?\d{2,4}\s?(?:-|to|and|–|—)\s?\$?\s?\d{2,4}", text))
+    return bool(re.search(r"\$\s?\d{2,4}\s?(?:-|to|and|y|a|–|—)\s?\$?\s?\d{2,4}", text))
 
 
 def _age_gate(text: str) -> bool:
@@ -118,7 +149,7 @@ def r_urgency(t): return len(_contains_any(t, URGENCY_WORDS)) >= 1
 @rule("too_good_pay", 20, "Promises high pay for little work (e.g. $200–$400/day, few hours)")
 def r_pay(t): return _daily_pay_range(t)
 
-@rule("money_ask", 35, "Mentions crypto, gift cards, or a fee to 'unlock' or withdraw")
+@rule("money_ask", 35, "Asks for crypto, gift cards, a money transfer, or a fee to 'unlock' or withdraw")
 def r_money(t): return len(_contains_any(t, MONEY_WORDS)) >= 1
 
 @rule("money_ask_heavy", 15, "Several payment/crypto bait phrases stacked together")
@@ -138,6 +169,20 @@ def r_vague(t):
     knows = ("your resume" in t or "your impressive resume" in t or "your application" in t)
     named = bool(re.search(r"\b(inc\.|llc|corp|company|team at)\b", t))
     return knows and not named
+
+@rule("family_impersonation", 35, "Pretends to be a family member texting from a 'new number'")
+def r_family(t):
+    return any(o in t for o in FAMILY_OPENERS) and any(n in t for n in NEW_NUMBER)
+
+@rule("move_to_other_app", 15, "Asks you to move the chat to WhatsApp, Telegram, or another app")
+def r_apps(t): return any(a in t for a in OTHER_APPS)
+
+@rule("brand_link", 30, "Uses a big brand or agency name plus a link asking you to verify or pay")
+def r_brand(t):
+    return _has_url(t) and any(b in t for b in BRANDS) and any(a in t for a in BRAND_ACTIONS)
+
+@rule("wrong_number_opener", 15, "Opens with a 'wrong number' line, a common start to investment scams")
+def r_wrong(t): return any(w in t for w in WRONG_NUMBER)
 
 
 # --- Scoring -----------------------------------------------------------------

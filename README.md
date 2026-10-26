@@ -77,13 +77,20 @@ Aegis uses two layers. A fast, local rule engine (already shipped, see [`app/sca
 - Requests to text a different number or move to WhatsApp, Telegram, or another app
 - Fake recruiter "task scams" and too-good-to-be-true pay
 - "Wrong number" openers and investment offers
-- Impersonation of family ("Hi mom, this is my new number")
+- Impersonation of family ("Hi mom, this is my new number" / "Hola mamá, este es mi nuevo número")
+- Spanish-language versions of job, urgency, and payment scams
 
-### Try the local scanner now
+### Try it now
+
+**In your browser:** [jeffreyesdavid.github.io/aegis-guardian/app](https://jeffreyesdavid.github.io/aegis-guardian/app/). English and Spanish, runs entirely on your device.
+
+**From the terminal:**
 
 ```bash
 python3 app/scam/scam_shield.py --file app/scam/samples/scams.txt
 ```
+
+**Tests:** `cd app/scam && python3 -m unittest` (23 tests) and `node app/scam/test_parity.mjs` (checks the browser and Python engines agree).
 
 ---
 
@@ -103,10 +110,12 @@ python3 app/scam/scam_shield.py --file app/scam/samples/scams.txt
 
 - **Phase 1 — Scam shield.** ✅ **Shipped.** A local, read-only scanner that flags scam texts and explains why. No network, Python stdlib only.
 - **Phase 1.5 — AI scam shield (hackathon, Oct 26 – Nov 4, 2026)**
-  - [ ] Paste text → verdict + red flags + next steps
+  - [x] Paste text → verdict + red flags + next steps (local rules, Oct 26)
+  - [x] English / Spanish output
+  - [x] Clean, mobile-friendly web app
+  - [x] Copy-a-warning message for family group chats
+  - [ ] AI layer (Muse Spark) for new scam scripts and context
   - [ ] Screenshot upload
-  - [ ] English / Spanish output
-  - [ ] Clean, mobile-friendly web app
   - [ ] Tested against real scam and legit samples
   - [ ] *Stretch:* shareable warning cards (Muse Image)
   - [ ] *Stretch:* X-ray mode to highlight suspicious parts (SAM 3.1)

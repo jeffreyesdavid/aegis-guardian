@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aegis Scam Check</title>
+<meta name="description" content="Free, bilingual scam checker. Paste a suspicious text and see the red flags. Runs on your device.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f5f2; --surface: #ffffff; --surface-2: #efeee9;
+    --fg: #1c1d22; --muted: #5d606b; --line: #dcdbd4;
+    --accent: #b5791f; --accent-soft: #f4e7cf;
+    --good: #2f7d55; --good-soft: #e3f1e9;
+    --warn: #9a6512; --warn-soft: #f6ebd5;
+    --crit: #b23a3a; --crit-soft: #f6e2e0;
+    --on-accent: #ffffff;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101116; --surface: #191a20; --surface-2: #1f2128;
+      --fg: #eceae4; --muted: #9a9ca6; --line: #2c2e37;
+      --accent: #e0a94a; --accent-soft: #37301f;
+      --good: #5cc088; --good-soft: #17291f;
+      --warn: #e0a94a; --warn-soft: #33291a;
+      --crit: #e2706e; --crit-soft: #3a1c1c;
+      --on-accent: #15161b;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101116; --surface: #191a20; --surface-2: #1f2128;
+    --fg: #eceae4; --muted: #9a9ca6; --line: #2c2e37;
+    --accent: #e0a94a; --accent-soft: #37301f;
+    --good: #5cc088; --good-soft: #17291f;
+    --warn: #e0a94a; --warn-soft: #33291a;
+    --crit: #e2706e; --crit-soft: #3a1c1c;
+    --on-accent: #15161b;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: "Spline Sans", system-ui, sans-serif; font-size: 16px; line-height: 1.55;
+  }
+  main { max-width: 40rem; margin: 0 auto; padding: 1.25rem 16px 3rem; }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+  .brand { font-weight: 600; font-size: .95rem; color: var(--fg); text-decoration: none; }
+  .brand span { color: var(--accent); }
+  .lang { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--surface); }
+  .lang button {
+    border: 0; background: transparent; color: var(--muted); font: inherit; font-size: .85rem; font-weight: 500;
+    padding: .3rem .8rem; border-radius: 999px; cursor: pointer; min-height: 36px;
+  }
+  .lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+  h1 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: clamp(1.9rem, 7vw, 2.5rem); line-height: 1.12; margin: 2rem 0 .5rem; text-wrap: balance; }
+  .lede { color: var(--muted); margin: 0 0 1.5rem; }
+  label.field { display: block; font-weight: 500; font-size: .9rem; margin-bottom: .4rem; }
+  textarea {
+    width: 100%; min-height: 9.5rem; resize: vertical; padding: .85rem 1rem;
+    font: inherit; color: var(--fg); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 12px;
+  }
+  textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .row { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .75rem; align-items: center; }
+  .btn {
+    font: inherit; font-weight: 600; border-radius: 10px; padding: .7rem 1.2rem; min-height: 44px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .link { background: none; border: 0; color: var(--muted); font: inherit; font-size: .9rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: .5rem 0; min-height: 44px; }
+  .private { font-size: .85rem; color: var(--muted); margin: .9rem 0 0; display: flex; gap: .45rem; align-items: flex-start; }
+  .private svg { flex: none; margin-top: .2rem; }
+
+  .result { margin-top: 2rem; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); overflow: hidden; }
+  .result[hidden] { display: none; }
+  .verdict { padding: 1.1rem 1.25rem; display: flex; gap: .9rem; align-items: center; }
+  .verdict .dot { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+  .verdict h2 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 1.45rem; margin: 0; line-height: 1.2; }
+  .verdict p { margin: .15rem 0 0; font-size: .92rem; color: var(--muted); }
+  .scam .verdict { background: var(--crit-soft); } .scam .dot { background: var(--crit); } .scam h2 { color: var(--crit); }
+  .sus .verdict { background: var(--warn-soft); } .sus .dot { background: var(--warn); } .sus h2 { color: var(--warn); }
+  .safe .verdict { background: var(--good-soft); } .safe .dot { background: var(--good); } .safe h2 { color: var(--good); }
+  .meter { height: 6px; background: var(--surface-2); }
+  .meter i { display: block; height: 100%; width: 0; transition: width .4s ease; }
+  .scam .meter i { background: var(--crit); } .sus .meter i { background: var(--warn); } .safe .meter i { background: var(--good); }
+  .section { padding: 1.1rem 1.25rem; border-top: 1px solid var(--line); }
+  .section h3 { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 .65rem; font-weight: 600; }
+  ul.flags, ol.steps { margin: 0; padding-left: 1.2rem; }
+  ul.flags li, ol.steps li { margin: .35rem 0; }
+  .none { color: var(--muted); margin: 0; }
+  .note { font-size: .85rem; color: var(--muted); margin: .8rem 0 0; }
+  .copied { font-size: .85rem; color: var(--good); }
+
+  footer { margin-top: 3rem; font-size: .85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 1.2rem; }
+  footer a { color: inherit; }
+  @media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <a class="brand" href="../">Aegis <span>Guardian</span></a>
+    <div class="lang" role="group" aria-label="Language / Idioma">
+      <button type="button" data-lang="en" aria-pressed="true">English</button>
+      <button type="button" data-lang="es" aria-pressed="false">Español</button>
+    </div>
+  </div>
+
+  <h1 data-t="title">Is this text a scam?</h1>
+  <p class="lede" data-t="lede">Paste a message you got. Aegis checks it for the tricks scammers use and tells you what to do next.</p>
+
+  <label class="field" for="msg" data-t="label">Suspicious message</label>
+  <textarea id="msg" data-tp="placeholder"></textarea>
+  <div class="row">
+    <button class="btn primary" id="scan" type="button" data-t="scan">Check it</button>
+    <button class="link" id="example" type="button" data-t="example">Try an example</button>
+  </div>
+  <p class="private">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    <span data-t="private">Checked on your device. Nothing you paste is sent anywhere or saved.</span>
+  </p>
+
+  <section class="result" id="result" hidden aria-live="polite">
+    <div class="verdict">
+      <span class="dot" aria-hidden="true"></span>
+      <div><h2 id="v-title"></h2><p id="v-sub"></p></div>
+    </div>
+    <div class="meter" aria-hidden="true"><i id="v-meter"></i></div>
+    <div class="section">
+      <h3 data-t="flags">Red flags found</h3>
+      <ul class="flags" id="v-flags"></ul>
+    </div>
+    <div class="section">
+      <h3 data-t="steps">What to do</h3>
+      <ol class="steps" id="v-steps"></ol>
+    </div>
+    <div class="section">
+      <h3 data-t="share">Warn your family</h3>
+      <div class="row" style="margin-top:0">
+        <button class="btn" id="copy" type="button" data-t="copy">Copy a warning to send</button>
+        <span class="copied" id="copied" hidden></span>
+      </div>
+      <p class="note" data-t="limits">Aegis looks for known scam patterns. A clean result isn't a guarantee, so if a message asks for money or personal info, check with the company directly.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span data-t="foot">Free and open source. Part of the Guardian security series.</span>
+    <a href="https://github.com/jeffreyesdavid/aegis-guardian">GitHub</a>
+  </footer>
+</main>
+
+<script src="rules.js"></script>
+<script>
+(function () {
+  "use strict";
+  const T = {
+    en: {
+      title: "Is this text a scam?",
+      lede: "Paste a message you got. Aegis checks it for the tricks scammers use and tells you what to do next.",
+      label: "Suspicious message",
+      placeholder: "Paste the text, email, or DM here…",
+      scan: "Check it", example: "Try an example",
+      private: "Checked on your device. Nothing you paste is sent anywhere or saved.",
+      flags: "Red flags found", steps: "What to do", share: "Warn your family",
+      copy: "Copy a warning to send", copied: "Copied. Paste it in your family chat.",
+      limits: "Aegis looks for known scam patterns. A clean result isn't a guarantee, so if a message asks for money or personal info, check with the company directly.",
+      foot: "Free and open source. Part of the Guardian security series.",
+      noFlags: "No known scam patterns found.",
+      empty: "Paste a message first.",
+      verdicts: {
+        scam: ["Likely a scam", "This message matches several patterns scammers use."],
+        sus: ["Be careful", "Some parts of this message look like scam tricks."],
+        safe: ["No red flags found", "This doesn't match common scam patterns."],
+      },
+      stepsBy: {
+        scam: ["Don't reply, click links, or call any number in the message.",
+               "Never send money, gift cards, crypto, or codes to someone you met by text.",
+               "Block the sender and report it: forward the text to 7726 (SPAM).",
+               "Already paid or shared info? Call your bank now and report it at reportfraud.ftc.gov."],
+        sus:  ["Don't click links or reply yet.",
+               "Contact the company or person directly, using a number or website you already trust.",
+               "If anyone pressures you to act fast, treat that as a warning sign."],
+        safe: ["Still be careful with links and requests for money or codes.",
+               "When in doubt, contact the sender through a channel you already trust."],
+      },
+      warn: (v, flags) => `⚠️ Scam alert: I got a text that Aegis rated "${v}". Watch out for messages like this.` +
+        (flags.length ? `\nRed flags: ${flags.join("; ")}.` : "") +
+        `\nDon't click links or send money. Check it yourself: https://jeffreyesdavid.github.io/aegis-guardian/app/`,
+      examples: [
+        "Hi Mom, this is my new number, I broke my phone. Can you message me on WhatsApp? I need help with a payment.",
+        "USPS: Your package has an unpaid shipping fee. Pay now to avoid return: https://usps-redelivery-help.com",
+        "This is the Recruiting Team. Your impressive resume caught our attention. Daily pay falls between $200 and $400. Text \"JD\" to 3463976885. Only 20 positions available!",
+      ],
+    },
+    es: {
+      title: "¿Este mensaje es una estafa?",
+      lede: "Pega un mensaje que recibiste. Aegis lo revisa en busca de los trucos que usan los estafadores y te dice qué hacer.",
+      label: "Mensaje sospechoso",
+      placeholder: "Pega aquí el texto, correo o mensaje…",
+      scan: "Revisarlo", example: "Ver un ejemplo",
+      private: "Se revisa en tu dispositivo. Nada de lo que pegas se envía ni se guarda.",
+      flags: "Señales de alerta", steps: "Qué hacer", share: "Avisa a tu familia",
+      copy: "Copiar un aviso para enviar", copied: "Copiado. Pégalo en el chat de tu familia.",
+      limits: "Aegis busca patrones de estafa conocidos. Un resultado limpio no es una garantía: si un mensaje te pide dinero o datos personales, confírmalo directamente con la empresa.",
+      foot: "Gratis y de código abierto. Parte de la serie de seguridad Guardian.",
+      noFlags: "No se encontraron patrones de estafa conocidos.",
+      empty: "Primero pega un mensaje.",
+      verdicts: {
+        scam: ["Probablemente es una estafa", "Este mensaje coincide con varios patrones que usan los estafadores."],
+        sus: ["Ten cuidado", "Algunas partes de este mensaje parecen trucos de estafa."],
+        safe: ["Sin señales de alerta", "No coincide con patrones de estafa comunes."],
+      },
+      stepsBy: {
+        scam: ["No respondas, no abras enlaces y no llames a ningún número del mensaje.",
+               "Nunca envíes dinero, tarjetas de regalo, cripto ni códigos a alguien que conociste por mensaje.",
+               "Bloquea al remitente y repórtalo: reenvía el mensaje al 7726 (SPAM).",
+               "¿Ya pagaste o diste datos? Llama a tu banco ahora y repórtalo en reportefraude.ftc.gov."],
+        sus:  ["No abras enlaces ni respondas todavía.",
+               "Comunícate directamente con la empresa o la persona, con un número o sitio en el que ya confíes.",
+               "Si alguien te presiona para actuar rápido, tómalo como una señal de alerta."],
+        safe: ["Igual ten cuidado con enlaces y pedidos de dinero o códigos.",
+               "Si tienes dudas, contacta al remitente por un medio en el que ya confíes."],
+      },
+      warn: (v, flags) => `⚠️ Alerta de estafa: recibí un mensaje que Aegis calificó como "${v}". Cuidado con mensajes así.` +
+        (flags.length ? `\nSeñales: ${flags.join("; ")}.` : "") +
+        `\nNo abras enlaces ni envíes dinero. Revísalo tú mismo: https://jeffreyesdavid.github.io/aegis-guardian/app/`,
+      examples: [
+        "Hola mamá, este es mi nuevo número, se me rompió el teléfono. ¿Me puedes ayudar con una transferencia bancaria urgente?",
+        "Aviso de peaje: tiene un saldo pendiente de pago. Pagar aquí para evitar multa: https://peaje-pago-ca.com",
+        "Equipo de reclutamiento: trabajo desde casa, sin experiencia, pago diario de $200 a $400. Escribe \"SI\" al 3463976885. Plazas limitadas.",
+      ],
+    },
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const msg = $("msg"), result = $("result");
+  let lang = "en", last = null, exampleIdx = 0;
+  try {
+    const saved = localStorage.getItem("aegis-lang");
+    lang = saved || ((navigator.language || "").toLowerCase().startsWith("es") ? "es" : "en");
+  } catch (e) {
+    lang = (navigator.language || "").toLowerCase().startsWith("es") ? "es" : "en";
+  }
+
+  function setLang(l) {
+    lang = l;
+    document.documentElement.lang = l;
+    document.querySelectorAll("[data-t]").forEach((el) => { el.textContent = T[l][el.dataset.t]; });
+    msg.placeholder = T[l].placeholder;
+    document.querySelectorAll(".lang button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === l)));
+    try { localStorage.setItem("aegis-lang", l); } catch (e) {}
+    if (last) render(last);
+  }
+
+  function key(verdict) { return verdict === "LIKELY SCAM" ? "scam" : verdict === "SUSPICIOUS" ? "sus" : "safe"; }
+
+  function render(r) {
+    const k = key(r.verdict), t = T[lang];
+    result.className = "result " + k;
+    $("v-title").textContent = t.verdicts[k][0];
+    $("v-sub").textContent = t.verdicts[k][1];
+    $("v-meter").style.width = Math.max(r.score, 4) + "%";
+    const flags = $("v-flags"); flags.replaceChildren();
+    if (!r.signals.length) {
+      const li = document.createElement("li"); li.className = "none"; li.textContent = t.noFlags; flags.append(li);
+    } else {
+      r.signals.slice().sort((a, b) => b.weight - a.weight).forEach((s) => {
+        const li = document.createElement("li"); li.textContent = lang === "es" ? s.why_es : s.why; flags.append(li);
+      });
+    }
+    const steps = $("v-steps"); steps.replaceChildren();
+    t.stepsBy[k].forEach((s) => { const li = document.createElement("li"); li.textContent = s; steps.append(li); });
+    $("copied").hidden = true;
+    result.hidden = false;
+  }
+
+  $("scan").addEventListener("click", () => {
+    const text = msg.value.trim();
+    if (!text) { msg.focus(); msg.placeholder = T[lang].empty; return; }
+    last = AegisRules.scan(text);
+    render(last);
+    result.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  $("example").addEventListener("click", () => {
+    const ex = T[lang].examples;
+    msg.value = ex[exampleIdx % ex.length]; exampleIdx++;
+    $("scan").click();
+  });
+
+  $("copy").addEventListener("click", async () => {
+    if (!last) return;
+    const t = T[lang], k = key(last.verdict);
+    const flags = last.signals.slice().sort((a, b) => b.weight - a.weight).slice(0, 3)
+      .map((s) => (lang === "es" ? s.why_es : s.why).toLowerCase());
+    const text = t.warn(t.verdicts[k][0], flags);
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) {
+      const ta = document.createElement("textarea"); ta.value = text; document.body.append(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e2) {} ta.remove();
+    }
+    const c = $("copied"); c.textContent = t.copied; c.hidden = false;
+  });
+
+  document.querySelectorAll(".lang button").forEach((b) => b.addEventListener("click", () => setLang(b.dataset.lang)));
+  setLang(lang);
+})();
+</script>
+</body>
+</html>

@@ -62,6 +62,37 @@ class VerdictTests(unittest.TestCase):
         self.assertLessEqual(len(r.message_preview), 81)
 
 
+class NewRuleTests(unittest.TestCase):
+    def _names(self, msg):
+        return {s["name"] for s in ss.scan(msg).signals}
+
+    def test_hi_mom_new_number(self):
+        r = ss.scan("Hi Mom, this is my new number. Can you text me on WhatsApp?")
+        self.assertEqual(r.verdict, "LIKELY SCAM")
+        self.assertIn("family_impersonation", self._names("Hi mom, new number, lost my phone"))
+
+    def test_spanish_family_impersonation(self):
+        self.assertIn("family_impersonation",
+                      self._names("Hola mamá, este es mi nuevo número"))
+
+    def test_real_mom_text_is_safe(self):
+        self.assertEqual(ss.scan("Mom: can you grab milk on your way home?").verdict, "LIKELY SAFE")
+
+    def test_brand_link_needs_link_and_action(self):
+        self.assertIn("brand_link", self._names("USPS: unpaid fee, pay now at https://usps-help.com"))
+        self.assertNotIn("brand_link", self._names("Your Amazon order has shipped. Track it in the app."))
+
+    def test_spanish_job_scam(self):
+        r = ss.scan("Trabajo desde casa, sin experiencia, pago diario de $200 a $400. Plazas limitadas.")
+        self.assertEqual(r.verdict, "LIKELY SCAM")
+
+    def test_wrong_number_opener(self):
+        self.assertIn("wrong_number_opener", self._names("Sorry, wrong number! You seem nice though."))
+
+    def test_verification_code_is_safe(self):
+        self.assertEqual(ss.scan("Your verification code is 482913. Don't share it.").verdict, "LIKELY SAFE")
+
+
 class SampleFileTests(unittest.TestCase):
     def setUp(self):
         self.here = os.path.dirname(__file__)
