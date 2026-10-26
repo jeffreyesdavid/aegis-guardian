@@ -8,7 +8,7 @@
 
 Aegis is a consent-first personal safety and anti-scam agent, built so it can never become the surveillance tool it's meant to prevent. It's part of the **Guardian** security portfolio, alongside [VPN Guardian](https://github.com/jeffreyesdavid/vpn-guardian) and [Wi-Fi Guardian](https://github.com/jeffreyesdavid/wifi-guardian). Like its siblings, it's **open source and auditable**, so you can verify there's no hidden backdoor.
 
- **Now in active development for the Meta Global AI Developer Hackathon** (indie dev track, Oct 26 – Nov 4, 2026).
+ **Live:** [try the scam checker](https://jeffreyesdavid.github.io/aegis-guardian/app/) in English or Spanish. AI layer powered by Meta's Muse Spark.
 
 ---
 
@@ -39,7 +39,7 @@ Most "family tracking" apps quietly cross the line into surveillance. Aegis is t
 
 ## How the scam scanner works
 
-Aegis uses two layers. A fast, local rule engine (already shipped, see [`app/scam/`](app/scam/)) catches known patterns with no network at all. The AI layer, built during the hackathon, reads what rules can't: screenshots, new scam scripts, and context.
+Aegis uses two layers. A fast, local rule engine (already shipped, see [`app/scam/`](app/scam/)) catches known patterns with no network at all. The AI layer reads what rules can't: screenshots, new scam scripts, and context.
 
 ```
  Screenshot / text / number
@@ -109,7 +109,7 @@ python3 app/scam/scam_shield.py --file app/scam/samples/scams.txt
 ## Roadmap
 
 - **Phase 1 — Scam shield.** ✅ **Shipped.** A local, read-only scanner that flags scam texts and explains why. No network, Python stdlib only.
-- **Phase 1.5 — AI scam shield (hackathon, Oct 26 – Nov 4, 2026)**
+- **Phase 1.5 — AI scam shield (Oct 2026)**
   - [x] Paste text → verdict + red flags + next steps (local rules, Oct 26)
   - [x] English / Spanish output
   - [x] Clean, mobile-friendly web app

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Aegis Guardian: AI scam scanner (Phase 1.5, Meta Global AI Developer Hackathon)
+Aegis Guardian: AI scam scanner (Phase 1.5)
 
 Runs the local rule engine first, then asks Muse Spark (Meta Model API) to read
 the message or screenshot and explain the red flags in English or Spanish.

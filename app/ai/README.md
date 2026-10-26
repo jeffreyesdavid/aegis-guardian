@@ -1,6 +1,6 @@
 # Aegis AI scanner (Muse Spark)
 
-The AI layer for Aegis Guardian, built for the Meta Global AI Developer Hackathon.
+The AI layer for Aegis Guardian.
 
 It runs the local rule engine first, then asks **Muse Spark** (Meta Model API, `muse-spark-1.3`) to read the message or a screenshot and explain the red flags in English or Spanish. Results come back as structured JSON: verdict, confidence, red flags with the exact evidence, and next steps.
 
