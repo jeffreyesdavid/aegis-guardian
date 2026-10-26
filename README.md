@@ -114,9 +114,9 @@ python3 app/scam/scam_shield.py --file app/scam/samples/scams.txt
   - [x] English / Spanish output
   - [x] Clean, mobile-friendly web app
   - [x] Copy-a-warning message for family group chats
-  - [ ] AI layer (Muse Spark) for new scam scripts and context
-  - [ ] Screenshot upload
-  - [ ] Tested against real scam and legit samples
+  - [x] AI layer (Muse Spark) with structured verdicts, evidence, and next steps ([`app/ai/`](app/ai/))
+  - [x] Screenshot upload (AI transcribes it, then the rules run on the text too)
+  - [ ] Tested against real scam and legit samples with a live key
   - [ ] *Stretch:* shareable warning cards (Muse Image)
   - [ ] *Stretch:* X-ray mode to highlight suspicious parts (SAM 3.1)
   - [ ] *Stretch:* one-tap "warn my family" message

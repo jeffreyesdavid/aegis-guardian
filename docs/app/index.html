@@ -97,6 +97,22 @@
   .note { font-size: .85rem; color: var(--muted); margin: .8rem 0 0; }
   .copied { font-size: .85rem; color: var(--good); }
 
+  .ai-only[hidden] { display: none; }
+  .shot { display: flex; align-items: center; gap: .75rem; margin-top: .75rem; flex-wrap: wrap; }
+  .shot input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .shot label { display: inline-flex; align-items: center; gap: .45rem; cursor: pointer; font-weight: 500; font-size: .92rem;
+    border: 1px dashed var(--line); border-radius: 10px; padding: .6rem 1rem; min-height: 44px; background: var(--surface); }
+  .shot img { max-height: 64px; border-radius: 6px; border: 1px solid var(--line); }
+  .shot .clear { font-size: .85rem; }
+  .ai-badge { display: inline-flex; align-items: center; gap: .35rem; font-size: .78rem; font-weight: 600; color: var(--accent);
+    background: var(--accent-soft); border-radius: 999px; padding: .2rem .65rem; margin-left: .5rem; vertical-align: middle; }
+  .ai-summary { margin: 0 0 .6rem; }
+  .ev { display: block; font-size: .88rem; color: var(--muted); margin-top: .1rem; }
+  .loading { color: var(--muted); margin: 0; display: flex; align-items: center; gap: .5rem; }
+  .spin { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: sp .8s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .err { color: var(--crit); margin: 0; }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
   footer { margin-top: 3rem; font-size: .85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 1.2rem; }
   footer a { color: inherit; }
   @media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
@@ -117,13 +133,19 @@
 
   <label class="field" for="msg" data-t="label">Suspicious message</label>
   <textarea id="msg" data-tp="placeholder"></textarea>
+  <div class="shot ai-only" hidden>
+    <input type="file" id="shot" accept="image/png,image/jpeg,image/webp,image/gif">
+    <label for="shot"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg><span data-t="shot">Or add a screenshot</span></label>
+    <img id="shot-preview" alt="" hidden>
+    <button class="link clear" id="shot-clear" type="button" hidden data-t="remove">Remove</button>
+  </div>
   <div class="row">
     <button class="btn primary" id="scan" type="button" data-t="scan">Check it</button>
     <button class="link" id="example" type="button" data-t="example">Try an example</button>
   </div>
   <p class="private">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-    <span data-t="private">Checked on your device. Nothing you paste is sent anywhere or saved.</span>
+    <span id="private" data-t="private">Checked on your device. Nothing you paste is sent anywhere or saved.</span>
   </p>
 
   <section class="result" id="result" hidden aria-live="polite">
@@ -132,6 +154,10 @@
       <div><h2 id="v-title"></h2><p id="v-sub"></p></div>
     </div>
     <div class="meter" aria-hidden="true"><i id="v-meter"></i></div>
+    <div class="section ai-only" id="ai-section" hidden>
+      <h3><span data-t="aiTitle">AI check</span><span class="ai-badge">Muse Spark</span></h3>
+      <div id="ai-body"></div>
+    </div>
     <div class="section">
       <h3 data-t="flags">Red flags found</h3>
       <ul class="flags" id="v-flags"></ul>
@@ -174,6 +200,13 @@
       foot: "Free and open source. Part of the Guardian security series.",
       noFlags: "No known scam patterns found.",
       empty: "Paste a message first.",
+      shot: "Or add a screenshot", remove: "Remove", aiTitle: "AI check",
+      aiPrivate: "The rule check runs on your device. The AI check sends only this message or screenshot to Meta's Muse Spark, through your own computer. Nothing is saved.",
+      aiLoading: "Muse Spark is reading the message…",
+      aiFail: "The AI check didn't work:",
+      aiConf: (n) => `${n}% confident`,
+      aiRead: "What it read:",
+      shotOnly: "Reading your screenshot…",
       verdicts: {
         scam: ["Likely a scam", "This message matches several patterns scammers use."],
         sus: ["Be careful", "Some parts of this message look like scam tricks."],
@@ -212,6 +245,13 @@
       foot: "Gratis y de código abierto. Parte de la serie de seguridad Guardian.",
       noFlags: "No se encontraron patrones de estafa conocidos.",
       empty: "Primero pega un mensaje.",
+      shot: "O agrega una captura de pantalla", remove: "Quitar", aiTitle: "Revisión con IA",
+      aiPrivate: "La revisión de reglas corre en tu dispositivo. La revisión con IA envía solo este mensaje o captura a Muse Spark de Meta, a través de tu propia computadora. No se guarda nada.",
+      aiLoading: "Muse Spark está leyendo el mensaje…",
+      aiFail: "La revisión con IA no funcionó:",
+      aiConf: (n) => `${n}% de confianza`,
+      aiRead: "Lo que leyó:",
+      shotOnly: "Leyendo tu captura…",
       verdicts: {
         scam: ["Probablemente es una estafa", "Este mensaje coincide con varios patrones que usan los estafadores."],
         sus: ["Ten cuidado", "Algunas partes de este mensaje parecen trucos de estafa."],
@@ -242,6 +282,8 @@
   const $ = (id) => document.getElementById(id);
   const msg = $("msg"), result = $("result");
   let lang = "en", last = null, exampleIdx = 0;
+  let aiOn = false, shotData = null, aiResult = null, aiError = null, aiPending = false, scanId = 0;
+  const AI_KEY = { scam: "LIKELY SCAM", suspicious: "SUSPICIOUS", safe: "LIKELY SAFE" };
   try {
     const saved = localStorage.getItem("aegis-lang");
     lang = saved || ((navigator.language || "").toLowerCase().startsWith("es") ? "es" : "en");
@@ -256,17 +298,21 @@
     msg.placeholder = T[l].placeholder;
     document.querySelectorAll(".lang button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === l)));
     try { localStorage.setItem("aegis-lang", l); } catch (e) {}
+    if (aiOn) $("private").textContent = T[l].aiPrivate;
     if (last) render(last);
   }
 
   function key(verdict) { return verdict === "LIKELY SCAM" ? "scam" : verdict === "SUSPICIOUS" ? "sus" : "safe"; }
 
   function render(r) {
-    const k = key(r.verdict), t = T[lang];
+    const t = T[lang];
+    const headline = aiResult ? AI_KEY[aiResult.verdict] : r.verdict;
+    const k = key(headline);
     result.className = "result " + k;
     $("v-title").textContent = t.verdicts[k][0];
     $("v-sub").textContent = t.verdicts[k][1];
-    $("v-meter").style.width = Math.max(r.score, 4) + "%";
+    $("v-meter").style.width = (aiResult ? Math.max(aiResult.confidence, 4) : Math.max(r.score, 4)) + "%";
+    renderAI();
     const flags = $("v-flags"); flags.replaceChildren();
     if (!r.signals.length) {
       const li = document.createElement("li"); li.className = "none"; li.textContent = t.noFlags; flags.append(li);
@@ -276,18 +322,93 @@
       });
     }
     const steps = $("v-steps"); steps.replaceChildren();
-    t.stepsBy[k].forEach((s) => { const li = document.createElement("li"); li.textContent = s; steps.append(li); });
+    stepsFor(k).forEach((s) => { const li = document.createElement("li"); li.textContent = s; steps.append(li); });
     $("copied").hidden = true;
     result.hidden = false;
   }
 
+  function renderAI() {
+    const sec = $("ai-section"), body = $("ai-body"), t = T[lang];
+    sec.hidden = !aiOn || (!aiPending && !aiResult && !aiError);
+    body.replaceChildren();
+    const p = (cls, txt) => { const el = document.createElement("p"); el.className = cls; el.textContent = txt; return el; };
+    if (aiPending) {
+      const l = p("loading", ""); const sp = document.createElement("span"); sp.className = "spin"; sp.setAttribute("aria-hidden", "true");
+      l.append(sp, document.createTextNode(t.aiLoading)); body.append(l); return;
+    }
+    if (aiError) { body.append(p("err", t.aiFail + " " + aiError)); return; }
+    if (!aiResult) return;
+    body.append(p("ai-summary", aiResult.summary + " (" + t.aiConf(aiResult.confidence) + ")"));
+    if (aiResult.red_flags.length) {
+      const ul = document.createElement("ul"); ul.className = "flags";
+      aiResult.red_flags.forEach((f) => {
+        const li = document.createElement("li"); li.textContent = f.flag;
+        if (f.evidence) { const ev = document.createElement("span"); ev.className = "ev"; ev.textContent = "“" + f.evidence + "”"; li.append(ev); }
+        ul.append(li);
+      });
+      body.append(ul);
+    }
+    if (shotData && aiResult.message_text) body.append(p("note", t.aiRead + " " + aiResult.message_text));
+  }
+
+  function stepsFor(k) {
+    return aiResult && aiResult.what_to_do.length ? aiResult.what_to_do : T[lang].stepsBy[k];
+  }
+
+  async function runAI(text, id) {
+    aiPending = true; aiError = null; aiResult = null;
+    if (last) render(last);
+    try {
+      const res = await fetch("/api/scan", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, image: shotData, lang }) });
+      const data = await res.json().catch(() => ({ error: "Bad response from the local server." }));
+      if (id !== scanId) return;
+      if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+      aiResult = data;
+      if (!text && data.message_text) last = AegisRules.scan(data.message_text);
+      if (!last) last = { verdict: AI_KEY[data.verdict], score: data.confidence, signals: [] };
+    } catch (e) {
+      if (id !== scanId) return;
+      aiError = e.message;
+    } finally {
+      if (id === scanId) { aiPending = false; if (last) render(last); else { result.hidden = true; } }
+    }
+  }
+
   $("scan").addEventListener("click", () => {
     const text = msg.value.trim();
-    if (!text) { msg.focus(); msg.placeholder = T[lang].empty; return; }
-    last = AegisRules.scan(text);
-    render(last);
+    if (!text && !shotData) { msg.focus(); msg.placeholder = T[lang].empty; return; }
+    const id = ++scanId;
+    aiResult = null; aiError = null;
+    last = text ? AegisRules.scan(text) : null;
+    if (last) render(last);
+    else {
+      result.className = "result sus"; $("v-title").textContent = T[lang].shotOnly; $("v-sub").textContent = "";
+      $("v-meter").style.width = "4%"; $("v-flags").replaceChildren(); $("v-steps").replaceChildren(); result.hidden = false;
+    }
+    if (aiOn) runAI(text, id);
     result.scrollIntoView({ behavior: "smooth", block: "start" });
   });
+
+  $("shot").addEventListener("change", (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { alert(lang === "es" ? "La imagen pesa más de 8 MB." : "That image is larger than 8 MB."); e.target.value = ""; return; }
+    const rd = new FileReader();
+    rd.onload = () => { shotData = rd.result; const img = $("shot-preview"); img.src = shotData; img.hidden = false; $("shot-clear").hidden = false; };
+    rd.readAsDataURL(f);
+  });
+  $("shot-clear").addEventListener("click", () => {
+    shotData = null; $("shot").value = ""; $("shot-preview").hidden = true; $("shot-clear").hidden = true;
+  });
+
+  // The AI check only exists when the page is served by app/ai/aegis_ai.py on your own computer.
+  fetch("/api/health", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((h) => {
+    if (!h || !h.ai) return;
+    aiOn = true;
+    document.querySelectorAll(".ai-only").forEach((el) => { if (el.id !== "ai-section") el.hidden = false; });
+    $("private").textContent = T[lang].aiPrivate;
+  }).catch(() => {});
 
   $("example").addEventListener("click", () => {
     const ex = T[lang].examples;
@@ -297,7 +418,7 @@
 
   $("copy").addEventListener("click", async () => {
     if (!last) return;
-    const t = T[lang], k = key(last.verdict);
+    const t = T[lang], k = key(aiResult ? AI_KEY[aiResult.verdict] : last.verdict);
     const flags = last.signals.slice().sort((a, b) => b.weight - a.weight).slice(0, 3)
       .map((s) => (lang === "es" ? s.why_es : s.why).toLowerCase());
     const text = t.warn(t.verdicts[k][0], flags);
